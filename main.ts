@@ -75,7 +75,12 @@ function run(p: Uint8Array, inp: Uint8Array) {
 const I = process.env.MAKEFUN_INPUT_DIR ?? '/input';
 const O = process.env.MAKEFUN_OUTPUT_DIR ?? '/output';
 for (const id of readdirSync(I).sort()) {
-  const r = run(new Uint8Array(readFileSync(join(I, id, 'program.bin'))), new Uint8Array(readFileSync(join(I, id, 'input.bin'))));
+  // One unreadable instance must not lose the rest of the set: answer it as an
+  // empty program (no output, trap 9) and keep going.
+  let r = { out: new Uint8Array(0), code: 9 };
+  try {
+    r = run(new Uint8Array(readFileSync(join(I, id, 'program.bin'))), new Uint8Array(readFileSync(join(I, id, 'input.bin'))));
+  } catch { /* keep the empty-program answer */ }
   mkdirSync(join(O, id), { recursive: true });
   writeFileSync(join(O, id, 'stdout.bin'), r.out);
   writeFileSync(join(O, id, 'exit.txt'), r.code + '\n');
